@@ -1,0 +1,135 @@
+{
+  "name": "git-conflict-radar",
+  "displayName": "Git Conflict Radar",
+  "description": "main dalında da değiştirilmiş satırları renkli işaretler, hangi task ile ne değiştiğini gösterir ve tekrar düzenleme uyarısı verir.",
+  "version": "0.1.0",
+  "publisher": "oznurozdemir",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "SCM Providers",
+    "Other"
+  ],
+  "keywords": [
+    "git",
+    "conflict",
+    "merge",
+    "main",
+    "task"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "gitConflictRadar.refresh",
+        "title": "Yenile",
+        "category": "Git Conflict Radar",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "gitConflictRadar.fetchMain",
+        "title": "main dalını getir (git fetch)",
+        "category": "Git Conflict Radar"
+      },
+      {
+        "command": "gitConflictRadar.openDiffWithMain",
+        "title": "main ile karşılaştır",
+        "category": "Git Conflict Radar"
+      },
+      {
+        "command": "gitConflictRadar.nextConflict",
+        "title": "Sonraki çakışmaya git",
+        "category": "Git Conflict Radar"
+      },
+      {
+        "command": "gitConflictRadar.toggle",
+        "title": "Aç / Kapat",
+        "category": "Git Conflict Radar"
+      }
+    ],
+    "configuration": {
+      "title": "Git Conflict Radar",
+      "properties": {
+        "gitConflictRadar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Çakışma taramasını etkinleştirir."
+        },
+        "gitConflictRadar.mainBranch": {
+          "type": "string",
+          "default": "origin/main",
+          "description": "Karşılaştırılacak ana dal. Bulunamazsa sırasıyla 'main' ve 'master' denenir."
+        },
+        "gitConflictRadar.taskPattern": {
+          "type": "string",
+          "default": "[A-Z][A-Z0-9]+-\\d+|#\\d+",
+          "description": "Commit mesajından veya branch adından task ID'si çıkarmak için kullanılan regex."
+        },
+        "gitConflictRadar.taskUrlTemplate": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Task bağlantısı şablonu. `{id}` task ID'si ile değiştirilir. Örn: `https://jira.firma.com/browse/{id}`"
+        },
+        "gitConflictRadar.autoFetchMinutes": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Bu kadar dakikada bir otomatik 'git fetch' yapılır. 0 = kapalı."
+        },
+        "gitConflictRadar.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Bir dosyada yeni çakışma bulunduğunda uyarı bildirimi gösterir."
+        }
+      }
+    },
+    "colors": [
+      {
+        "id": "gitConflictRadar.conflictBackground",
+        "description": "Çakışma riski olan satırların arka plan rengi.",
+        "defaults": {
+          "dark": "#ff6b3d33",
+          "light": "#ff6b3d26",
+          "highContrast": "#ff6b3d55",
+          "highContrastLight": "#ff6b3d40"
+        }
+      },
+      {
+        "id": "gitConflictRadar.conflictRuler",
+        "description": "Kaydırma çubuğundaki çakışma işaretinin rengi.",
+        "defaults": {
+          "dark": "#ff6b3dcc",
+          "light": "#e8501fcc",
+          "highContrast": "#ff6b3d",
+          "highContrastLight": "#e8501f"
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && mocha \"out/test/**/*.test.js\"",
+    "package": "vsce package --allow-missing-repository",
+    "test:e2e": "npm run compile && node out/test/e2e/runE2e.js"
+  },
+  "dependencies": {
+    "diff": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.2.1",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^3.2.0",
+    "mocha": "^10.4.0",
+    "typescript": "^5.4.0"
+  }
+}
