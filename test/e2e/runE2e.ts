@@ -19,7 +19,7 @@ async function main() {
       extensionDevelopmentPath: root,
       extensionTestsPath: path.join(__dirname, 'suite'),
       launchArgs: [repo, '--disable-extensions', '--user-data-dir', path.join(tmp, 'user-data'), '--skip-welcome'],
-      extensionTestsEnv: { GCR_TEST_REPO: repo },
+      extensionTestsEnv: { GCR_TEST_REPO: repo, GCR_SCRIPTS: path.join(root, 'scripts') },
     });
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });

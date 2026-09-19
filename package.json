@@ -55,6 +55,11 @@
         "category": "Git Conflict Radar"
       },
       {
+        "command": "gitConflictRadar.showConflicts",
+        "title": "Tüm çakışmaları listele",
+        "category": "Git Conflict Radar"
+      },
+      {
         "command": "gitConflictRadar.toggle",
         "title": "Aç / Kapat",
         "category": "Git Conflict Radar"
@@ -83,11 +88,11 @@
           "default": "",
           "markdownDescription": "Task bağlantısı şablonu. `{id}` task ID'si ile değiştirilir. Örn: `https://jira.firma.com/browse/{id}`"
         },
-        "gitConflictRadar.autoFetchMinutes": {
+        "gitConflictRadar.remoteCheckSeconds": {
           "type": "number",
-          "default": 0,
+          "default": 60,
           "minimum": 0,
-          "description": "Bu kadar dakikada bir otomatik 'git fetch' yapılır. 0 = kapalı."
+          "markdownDescription": "Uzaktaki ana dalın (örn. `origin/main`) kaç saniyede bir kontrol edileceği. Biri main'e merge yaptığında yalnızca o dal arka planda fetch edilir, tüm branch taranır ve bildirim gösterilir. 0 = kapalı (en az 5 sn)."
         },
         "gitConflictRadar.showNotifications": {
           "type": "boolean",

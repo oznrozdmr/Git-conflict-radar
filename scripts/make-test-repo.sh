@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 # Çakışmalı örnek bir repo oluşturur: ./scripts/make-test-repo.sh <hedef-dizin>
+# Yanına "uzak sunucu" olarak <hedef-dizin>-origin.git bare reposunu da kurar (origin/main).
 #
 #  main:     PROJ-101 (3. satır), PROJ-120 (6. satır),
 #            task'sız commit (9. satır) -> 'feature/PROJ-150-footer' branch'i ile merge edildi
 #  feature/PROJ-202-profile (checkout edilmiş halde):
-#            3. satırı commit'li değiştirir, 9. satırı kaydedilmemiş (commit'siz) değiştirir
+#            3. satırı commit'li değiştirir, 9. satırı kaydedilmemiş (commit'siz) değiştirir,
+#            util.js'de formatDate'i değiştirir (main henüz dokunmadı -> çakışma yok;
+#            ./scripts/simulate-merge.sh ile main'e çakışan bir merge gelir)
 set -euo pipefail
 
 DIR="${1:?Kullanım: $0 <hedef-dizin>}"
-rm -rf "$DIR"
+ORIGIN="${DIR%/}-origin.git"
+rm -rf "$DIR" "$ORIGIN"
 mkdir -p "$DIR"
 cd "$DIR"
 
@@ -34,7 +38,18 @@ function footer() {
 
 module.exports = { login, footer, VERSION };
 JS
-git add app.js
+cat > util.js <<'JS'
+function formatDate(d) {
+  return d.toISOString();
+}
+
+function slugify(s) {
+  return s.toLowerCase().replace(/\s+/g, '-');
+}
+
+module.exports = { formatDate, slugify };
+JS
+git add app.js util.js
 git commit -q -m "İlk sürüm"
 
 git branch feature/PROJ-202-profile
@@ -56,13 +71,20 @@ git checkout -q main
 git merge -q --no-ff --no-edit feature/PROJ-150-footer
 git branch -q -D feature/PROJ-150-footer
 
+# Uzak sunucu (origin) ve origin/main
+git init -q --bare -b main "$ORIGIN"
+git remote add origin "$ORIGIN"
+git push -q origin main
+git fetch -q origin
+
 # Sizin branch'iniz
 export GIT_AUTHOR_NAME="Öznur" GIT_AUTHOR_EMAIL="oznur@example.com"
 git checkout -q feature/PROJ-202-profile
 sed -i.bak 's/  return true;/  return checkProfile(user);/' app.js && rm app.js.bak
-git commit -qam "PROJ-202: profil kontrolü"
+sed -i.bak "s/return d.toISOString();/return d.toLocaleDateString('tr-TR');/" util.js && rm util.js.bak
+git commit -qam "PROJ-202: profil kontrolü ve tarih formatı"
 
 # Commit'lenmemiş değişiklik
 sed -i.bak "s/Copyright 2025/© 2025/" app.js && rm app.js.bak
 
-echo "Örnek repo hazır: $DIR (branch: feature/PROJ-202-profile)"
+echo "Örnek repo hazır: $DIR (branch: feature/PROJ-202-profile, uzak: $ORIGIN)"
