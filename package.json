@@ -1,9 +1,14 @@
 {
   "name": "git-conflict-radar",
   "displayName": "Git Conflict Radar",
-  "description": "main dalında da değiştirilmiş satırları renkli işaretler, hangi task ile ne değiştiğini gösterir ve tekrar düzenleme uyarısı verir.",
-  "version": "0.1.0",
+  "description": "Spot merge conflicts before you merge: highlights lines also changed on main, shows which task/commit changed them, and watches main in the background.",
+  "version": "0.2.0",
   "publisher": "oznurozdemir",
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#0f1b2d",
+    "theme": "dark"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,10 +27,15 @@
   ],
   "keywords": [
     "git",
-    "conflict",
     "merge",
+    "conflict",
+    "merge conflict",
     "main",
-    "task"
+    "branch",
+    "blame",
+    "jira",
+    "task",
+    "çakışma"
   ],
   "activationEvents": [
     "onStartupFinished"
