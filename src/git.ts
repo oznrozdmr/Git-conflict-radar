@@ -18,7 +18,14 @@ export function git(cwd: string, args: string[]): Promise<string> {
       {
         cwd,
         maxBuffer: 64 * 1024 * 1024,
-        env: { ...process.env, GIT_OPTIONAL_LOCKS: '0', LC_ALL: 'C' },
+        env: {
+          ...process.env,
+          GIT_OPTIONAL_LOCKS: '0',
+          LC_ALL: 'C',
+          // Arka plandaki fetch/ls-remote asla şifre ya da SSH onayı bekleyip takılmasın.
+          GIT_TERMINAL_PROMPT: '0',
+          GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND ?? 'ssh -o BatchMode=yes',
+        },
       },
       (err, stdout, stderr) => {
         if (err) {

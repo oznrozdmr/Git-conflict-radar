@@ -77,8 +77,11 @@ export class ConflictAnalyzer {
     return [...new Set([...this.rootCache.values()].filter((r): r is string => !!r))];
   }
 
-  async findRoot(filePath: string): Promise<string | undefined> {
-    const dir = path.dirname(filePath);
+  findRoot(filePath: string): Promise<string | undefined> {
+    return this.findRootForDir(path.dirname(filePath));
+  }
+
+  async findRootForDir(dir: string): Promise<string | undefined> {
     if (!this.rootCache.has(dir)) {
       const out = await tryGit(dir, ['rev-parse', '--show-toplevel']);
       setBounded(this.rootCache, dir, out ? out.trim() : null);
@@ -159,6 +162,34 @@ export class ConflictAnalyzer {
       }),
     );
     return { refs, relPath, conflicts };
+  }
+
+  /**
+   * Hem sizin tarafınızda (commit'li ya da diskte commit'siz) hem de main'de değişmiş dosyalar.
+   * Yalnızca bu dosyalarda çakışma olabileceği için branch taraması bunlarla sınırlıdır.
+   */
+  async candidateFiles(refs: RefsInfo): Promise<string[]> {
+    if (refs.base === refs.mainSha) {
+      return [];
+    }
+    const names = (out: string) => out.split('\n').filter(Boolean);
+    const theirs = names(await git(refs.root, ['diff', '--name-only', '--no-renames', refs.base, refs.mainSha]));
+    if (theirs.length === 0) {
+      return [];
+    }
+    const [ours, untracked] = await Promise.all([
+      git(refs.root, ['diff', '--name-only', '--no-renames', refs.base]).then(names),
+      git(refs.root, ['ls-files', '--others', '--exclude-standard']).then(names),
+    ]);
+    const mine = new Set([...ours, ...untracked]);
+    return theirs.filter((f) => mine.has(f));
+  }
+
+  /** Ana dal bir uzak dal ise (örn. origin/main) uzak adını ve dal adını döndürür. */
+  async remoteBranch(refs: RefsInfo): Promise<{ remote: string; branch: string } | undefined> {
+    const remotes = (await git(refs.root, ['remote'])).split('\n').filter(Boolean);
+    const remote = remotes.find((r) => refs.mainRef.startsWith(`${r}/`));
+    return remote ? { remote, branch: refs.mainRef.slice(remote.length + 1) } : undefined;
   }
 
   /** main'deki dosya içeriği (dosya main'de yoksa boş metin). */
