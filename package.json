@@ -5,6 +5,14 @@
   "version": "0.1.0",
   "publisher": "oznurozdemir",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oznrozdmr/Git-conflict-radar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oznrozdmr/Git-conflict-radar/issues"
+  },
+  "homepage": "https://github.com/oznrozdmr/Git-conflict-radar#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -116,7 +124,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && mocha \"out/test/**/*.test.js\"",
-    "package": "vsce package --allow-missing-repository",
+    "package": "vsce package",
     "test:e2e": "npm run compile && node out/test/e2e/runE2e.js"
   },
   "dependencies": {
