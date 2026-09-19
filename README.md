@@ -1,38 +1,42 @@
 # Git Conflict Radar
 
-Siz kendi branch'inizde çalışırken **main dalında da değiştirilmiş satırları** merge'den önce gösterir.
+**Spot merge conflicts before you merge.** Git Conflict Radar highlights the lines you changed that were *also* changed on `main`. It tells you which task and commit changed them and warns you to rework your change. It also watches `main` in the background, so you hear about a teammate's merge as soon as it lands.
 
-- 🟧 **Renkli işaretleme:** Çakışma riski olan satırlar turuncu arka planla, gutter ikonuyla ve kaydırma çubuğunda işaretlenir.
-- 🏷️ **Task bilgisi:** Satırın sonunda ve hover'da o bölgeyi main'de hangi task'ın, hangi commit'in ve kimin değiştirdiği gösterilir. main'deki değişikliğin diff'i de hover'da yer alır.
-- ⚠️ **Tekrar düzenleyin uyarısı:** Her çakışma Problems paneline uyarı olarak düşer. Yeni çakışma bulunduğunda bir bildirim gösterilir.
-- ✍️ **Kaydedilmemiş değişiklikler dahil:** Karşılaştırma editördeki güncel içerikle yapılır. Yazarken işaretler güncellenir.
-- 📡 **Arka planda main takibi:** Biri main'e merge yaptığında eklenti bunu kendiliğinden fark eder (varsayılan: 60 sn içinde). Sadece main dalını fetch eder, branch'inizi tarar ve anında bildirim gösterir: *"origin/main'e yeni değişiklik geldi: PROJ-303 (Zeynep Demir). 1 dosyada çakışma riski: util.js. Lütfen tekrar düzenleyin."*
-- 🗂️ **Tüm branch taranır:** Açmadığınız dosyalar da taranır. Hem sizin hem main'in değiştirdiği her dosyadaki çakışmalar Problems panelinde ve **Tüm çakışmaları listele** ekranında görünür.
+> 🇹🇷 Türkçe açıklama aşağıda: [Türkçe](#türkçe). The extension's UI messages are currently in Turkish.
 
-## Nasıl çalışır?
+## Features
 
-1. Sizin `HEAD`'iniz ile ana dal (`origin/main`, yoksa `main`/`master`) arasındaki ortak ata (`git merge-base`) bulunur.
-2. Ortak atadan beri **main'de** değişen satırlar (`git diff -U0 base main`) ve **sizin** değiştirdiğiniz satırlar (editör içeriği ↔ ortak ata) çıkarılır.
-3. İki taraf aynı ya da bitişik satırlara dokunuyorsa (git'in çakışma kuralı) bölge işaretlenir. İki tarafta birebir aynı yapılmış değişiklikler atlanır.
-4. Açılışta, dal değişiminde, kaydetmede ve main her güncellendiğinde, iki tarafta da değişen **tüm dosyalar** (`git diff --name-only`) bu yöntemle taranır.
-5. Uzak main her `remoteCheckSeconds` saniyede bir `git ls-remote` ile kontrol edilir. Bu çok hafif bir istek; yalnızca son commit'in kimliği alınır. Değişmişse yalnızca o dal fetch edilir. Arka plandaki git komutları hiçbir zaman şifre sormaz. Uzak sunucu kimlik doğrulama isterse kontrol sessizce atlanır ve Output → Git Conflict Radar'a yazılır.
-6. main tarafındaki satırlar `git blame` ile commit'lere bağlanır. Task ID'si şu sırayla aranır:
-   1. Commit mesajı (ör. `PROJ-123: login düzeltildi`)
-   2. Commit'i main'e getiren merge commit'teki branch adı (ör. `Merge branch 'feature/PROJ-123-login'`, `Merge pull request #5 from ayse/feature/PROJ-123`)
-   3. Merge commit mesajının kendisi (ör. PR numarası `#5`)
+- 🟧 **Highlighted conflict zones.** Risky lines get an orange background, a gutter icon and a scrollbar marker.
+- 🏷️ **Who changed it, and why.** An inline label and the hover show the task ID (e.g. `PROJ-123`), commit, author, date and message. The hover also includes the exact diff that landed on `main`.
+- ⚠️ **"Please rework" warnings.** Every conflict appears in the Problems panel, and new conflicts trigger a notification.
+- ✍️ **Unsaved edits included.** The comparison uses the live editor buffer, so markers update as you type.
+- 📡 **Background watch of `main`.** When someone merges into `main`, the extension notices within `remoteCheckSeconds` (default 60 s). It fetches only that branch, rescans your branch and notifies you, e.g. *"origin/main got new changes: PROJ-303 (Jane Doe). Conflict risk in 1 file: util.js. Please rework."*
+- 🗂️ **Whole-branch scan.** Files you haven't opened are checked too. **List all conflicts** shows every risk across the branch.
 
-## Ayarlar
+## How it works
 
-| Ayar | Varsayılan | Açıklama |
+1. Find the merge-base of your `HEAD` and the main branch (`origin/main`, falling back to `main`/`master`).
+2. Collect the lines changed on **main** since the merge-base (`git diff -U0 base main`) and the lines changed on **your side**: the editor buffer compared with the merge-base, covering committed, uncommitted and unsaved changes.
+3. If both sides touch the same or adjacent lines (git's own conflict rule), the region is flagged. Identical changes on both sides are ignored.
+4. On startup, branch switch, save and every update of `main`, all files changed on both sides are scanned.
+5. The remote `main` is polled with a lightweight `git ls-remote`. Only when it moved is that single branch fetched. Background git calls never prompt for credentials.
+6. The lines on `main` are traced with `git blame`. The task ID is taken from:
+   1. the commit message (`PROJ-123: fix login`),
+   2. otherwise the branch name of the merge commit that brought it in (`Merge branch 'feature/PROJ-123-login'`, `Merge pull request #5 from jane/feature/PROJ-123`),
+   3. otherwise the merge message itself (e.g. PR number `#5`).
+
+## Settings
+
+| Setting | Default | Description |
 |---|---|---|
-| `gitConflictRadar.mainBranch` | `origin/main` | Karşılaştırılacak dal. Bulunamazsa `main`, `master` denenir. |
-| `gitConflictRadar.taskPattern` | `[A-Z][A-Z0-9]+-\d+\|#\d+` | Task ID regex'i. |
-| `gitConflictRadar.taskUrlTemplate` | – | Örn. `https://jira.firma.com/browse/{id}`. Doluysa task hover'da bağlantı olur. |
-| `gitConflictRadar.remoteCheckSeconds` | `60` | Uzak main'in kaç saniyede bir kontrol edileceği. 0 = kapalı (en az 5). |
-| `gitConflictRadar.showNotifications` | `true` | Yeni çakışmada bildirim göster. |
-| `gitConflictRadar.enabled` | `true` | Eklentiyi aç/kapat. |
+| `gitConflictRadar.mainBranch` | `origin/main` | Branch to compare against. Falls back to `main`, `master`. |
+| `gitConflictRadar.taskPattern` | `[A-Z][A-Z0-9]+-\d+\|#\d+` | Regex used to extract task IDs. |
+| `gitConflictRadar.taskUrlTemplate` | – | e.g. `https://jira.example.com/browse/{id}`. Makes task IDs clickable. |
+| `gitConflictRadar.remoteCheckSeconds` | `60` | How often to check the remote main branch. `0` = off (minimum 5). |
+| `gitConflictRadar.showNotifications` | `true` | Show a notification for new conflicts. |
+| `gitConflictRadar.enabled` | `true` | Enable/disable the extension. |
 
-Renkleri `workbench.colorCustomizations` ile değiştirebilirsiniz:
+Customize colors with `workbench.colorCustomizations`:
 
 ```json
 "workbench.colorCustomizations": {
@@ -41,34 +45,53 @@ Renkleri `workbench.colorCustomizations` ile değiştirebilirsiniz:
 }
 ```
 
-## Komutlar
+## Commands
 
-- **Git Conflict Radar: Yenile**
-- **Git Conflict Radar: main dalını getir (git fetch)**: `origin/main` gibi uzak dallar için güncel hali çeker.
-- **Git Conflict Radar: main ile karşılaştır**: Dosyanın main'deki hali ile yan yana diff açar.
-- **Git Conflict Radar: Tüm çakışmaları listele**: Durum çubuğundaki `⚠` öğesine tıklamakla aynı işi yapar. Tüm dosyalardaki çakışmaları task ve yazar bilgisiyle listeler.
-- **Git Conflict Radar: Sonraki çakışmaya git**
-- **Git Conflict Radar: Aç / Kapat**
+- **Git Conflict Radar: List all conflicts**. Same as clicking the `⚠` status bar item.
+- **Git Conflict Radar: Go to next conflict**
+- **Git Conflict Radar: Compare with main**. Side-by-side diff with the file on `main`.
+- **Git Conflict Radar: Fetch main**
+- **Git Conflict Radar: Refresh**
+- **Git Conflict Radar: Toggle**
 
-> Not: Tamamen anlık (push bildirimli) takip için GitHub'dan webhook alan bir sunucu gerekir. Eklenti bunun yerine uzak main'i periyodik olarak kontrol eder; `remoteCheckSeconds` ile bu süreyi kısaltabilirsiniz.
+## Requirements
 
-## Geliştirme
+- Git on your `PATH`
+- A git repository with a `main` or `master` branch, local or remote
+
+> Instant, push-style notifications would need a server receiving GitHub webhooks. This extension polls the remote instead; lower `remoteCheckSeconds` for faster updates.
+
+---
+
+## Türkçe
+
+Siz kendi branch'inizde çalışırken **main dalında da değiştirilmiş satırları** merge'den önce gösterir.
+
+- 🟧 **Renkli işaretleme:** Çakışma riski olan satırlar turuncu arka planla, gutter ikonuyla ve kaydırma çubuğunda işaretlenir.
+- 🏷️ **Task bilgisi:** Satır sonunda ve hover'da o bölgeyi main'de hangi task'ın, hangi commit'in ve kimin değiştirdiği görünür. main'deki değişikliğin diff'i de hover'da yer alır.
+- ⚠️ **Tekrar düzenleyin uyarısı:** Her çakışma Problems paneline uyarı olarak düşer. Yeni çakışmalarda bildirim çıkar.
+- ✍️ **Kaydedilmemiş değişiklikler dahil:** Karşılaştırma editördeki güncel içerikle yapılır.
+- 📡 **Arka planda main takibi:** Biri main'e merge yaptığında eklenti bunu en geç `remoteCheckSeconds` (varsayılan 60 sn) içinde fark eder. Sadece main'i fetch eder, branch'inizi tarar ve bildirim gösterir.
+- 🗂️ **Tüm branch taranır:** Açmadığınız dosyalar da taranır. **Tüm çakışmaları listele** ile hepsini görebilirsiniz.
+
+Task ID'si sırasıyla şuralardan aranır: commit mesajı, merge commit'teki branch adı (`feature/PROJ-123-login`), merge mesajı (PR numarası). Ayarlar ve komutlar yukarıdaki tablolarla aynıdır.
+
+## Development / Geliştirme
 
 ```bash
 npm install
-npm test            # birim testleri + gerçek git reposuyla analiz testleri
-npm run test:e2e    # yüklü VS Code içinde uçtan uca test
-npm run package     # .vsix üretir
+npm test            # unit tests + analysis tests on a real git repo
+npm run test:e2e    # end-to-end tests inside an installed VS Code
+npm run package     # builds the .vsix
 ```
 
-F5 (**Run Git Conflict Radar**) ile Extension Development Host açılır. Denemek için örnek bir repo oluşturabilirsiniz:
+Try it with a demo repo, then simulate a teammate's merge:
 
 ```bash
-./scripts/make-test-repo.sh /tmp/radar-demo
+./scripts/make-test-repo.sh /tmp/radar-demo      # open /tmp/radar-demo in VS Code
+./scripts/simulate-merge.sh /tmp/radar-demo      # a notification arrives within ~1 min
 ```
 
-Eklenti açıkken başka birinin main'e merge yapmasını taklit etmek için şunu çalıştırın. En geç `remoteCheckSeconds` süresi içinde `util.js` için bildirim gelir:
+## License
 
-```bash
-./scripts/simulate-merge.sh /tmp/radar-demo
-```
+[MIT](LICENSE)
